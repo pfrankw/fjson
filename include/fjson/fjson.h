@@ -72,11 +72,12 @@ typedef struct fjson_s {
 } fjson_t;
 
 fjson_t* fjson_new();
-void fjson_free( fjson_t *fjson, int free_el );
+void fjson_free(fjson_t *fjson, int free_el);
 
 // Return -1 on error, 0 on no error, 1 on completed parsing element.
 // On error all the fjson_putbyte call chain returns error.
 
-int fjson_putbyte( fjson_t *fjson, char byte );
+int fjson_putbyte(fjson_t *fjson, char byte);
+int fjson_putbuf(fjson_t *fjson, char *buf, size_t len);
 
 #endif
