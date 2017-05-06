@@ -5,7 +5,10 @@
 
 #include <fjson/fjson.h>
 
-void print_el( fjson_element_t *el ){
+void print_el( fjson_element_t *el )
+{
+    if( !el )
+        return;
 
     switch( el->type ){
 
@@ -67,7 +70,8 @@ void print_el( fjson_element_t *el ){
     }
 }
 
-int main( int argc, char **argv ){
+int main( int argc, char **argv )
+{
 
     int r = -1;
     fjson_t *fjson = fjson_new();
@@ -91,7 +95,9 @@ int main( int argc, char **argv ){
         goto cleanup;
 
     for(i=0; i<json_len; i++)
-        fjson_putbyte( fjson, json_buf[i] );
+        if( fjson_putbyte( fjson, json_buf[i] ) < 0 )
+            goto cleanup;
+
 
     print_el( fjson->el );
 
