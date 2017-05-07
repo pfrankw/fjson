@@ -336,7 +336,10 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         break;
 
     case FJSON_STATE_OBJECT_VALUE:
-        return fjson_state_object_value(fjson, byte);
+
+        if (fjson_state_object_value(fjson, byte) == -1)
+            return -1;
+
         break;
 
 
