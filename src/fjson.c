@@ -444,3 +444,17 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     return 0;
 }
+
+
+int fjson_putbuf(fjson_t *fjson, char *buf, size_t len)
+{
+    size_t i;
+    int r;
+
+    for(i=0; i<len; i++){
+        if ((r=fjson_putbyte(fjson, buf[i])) != 0){
+            return r;
+        }
+    }
+    return 0;
+}

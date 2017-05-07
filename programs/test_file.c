@@ -78,8 +78,6 @@ int main( int argc, char **argv )
     FILE *fp = 0;
     char *json_buf = 0;
     size_t json_len = 0;
-    size_t i;
-
 
     fp = fopen( argv[1], "rb" );
     if( !fp )
@@ -94,10 +92,8 @@ int main( int argc, char **argv )
     if( fread( json_buf, 1, json_len, fp ) != json_len )
         goto cleanup;
 
-    for(i=0; i<json_len; i++)
-        if( fjson_putbyte( fjson, json_buf[i] ) < 0 )
-            goto cleanup;
-
+    if (fjson_putbuf(fjson, json_buf, json_len) != 1)
+        goto cleanup;
 
     print_el( fjson->el );
 
