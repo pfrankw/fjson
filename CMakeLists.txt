@@ -22,4 +22,4 @@ add_subdirectory( src )
 add_subdirectory( programs )
 
 
-#install( DIRECTORY "${CMAKE_SOURCE_DIR}/include/project_name" DESTINATION include )
+install( DIRECTORY "${CMAKE_SOURCE_DIR}/include/fjson" DESTINATION include )
