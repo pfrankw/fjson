@@ -19,7 +19,7 @@ This means that you can literally start to download a json document and parsing 
 It is easy:  
 1. Allocate the `fjson_t`structure
 2. When you have one byte or a buffer, just process it using the fjson_putbyte() or fjson_putbuf() APIs.
-3. Once finished the parsing you can free the `fjson_t` structure.
+3. Once finished the parsing you can access the `fjson_t`->el which is the parsed `fjson_element_t` structure and then you can free the `fjson_t` structure.
 4. Walk the `fjson_element_t` structure and search for what you want.
 5. Free the `fjson_element_t` structure by using the fjson_free_element() API.
 
@@ -29,6 +29,15 @@ This structure contains a `fjson_type_t` enumerator and a union that contains:
 - `int64_t` in case the type is FJSON_TYPE_NUMBER. (To be changed with double)
 - `struct fjson_array_s`in case the type is FJSON_TYPE_ARRAY. This struct is a linked list of other elements.
 - `struct fjson_pair_s` in case the type is FJSON_TYPE_OBJECT. This struct is a linked list of key-value, where the key is always a `fjson_element_t` with type FJSON_TYPE_STRING and the value is just a `fjson_element_t` with variable type.
-- `unsigned char bool_val`in case the TYPE is FJSON_TYPE_BOOLEAN. If it equals to 0 the boolean value in the JSON element is false, else it is true.
+- `unsigned char bool_val` in case the TYPE is FJSON_TYPE_BOOLEAN. If it equals to 0 the boolean value in the JSON element is false, else it is true.
 - `void *content` not really used. Can be used to access the data in a raw format.
 
+## Missing & TODO
+There is no support for special chars inside strings. Don't blame me, no time :(
+There is no support for decimal numbers.
+There is not the fjson_free_element() API. I AM SORRY, but again, time.
+
+I hope to get everything done ASAP.
+
+## Thanks
+A special thanks to my friend Davide, that gave me the idea and the method to develop it.
