@@ -33,11 +33,11 @@ This structure contains a `fjson_type_t` enumerator and a union that contains:
 - `void *content` not really used. Can be used to access the data in a raw format.
 
 ## Missing & TODO
-There is no support for special chars inside strings. Don't blame me, no time :(
-There is no support for decimal numbers.
-There is not the fjson_free_element() API. I AM SORRY, but again, time.
-
-I hope to get everything done ASAP.
-
+There is no support for special chars inside strings. Don't blame me, no time :(  
+There is no support for decimal numbers.  
+There is not the fjson_free_element() API. I AM SORRY, but again, time.  
+  
+I hope to get everything done ASAP.  
+  
 ## Thanks
 A special thanks to my friend Davide, that gave me the idea and the method to develop it.
