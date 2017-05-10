@@ -1,5 +1,5 @@
 # fjson
-Minimalist, recursive, Finite-State Machine JSON parser
+[![Build Status](https://travis-ci.org/pfrankw/fjson.svg?branch=master)](https://travis-ci.org/pfrankw/fjson)  
 
 ## Overview
 fjson is a recursive Finite-State Machine JSON parser which operates on streams (byte per byte!) by keeping track internally
