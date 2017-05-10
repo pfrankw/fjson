@@ -19,8 +19,8 @@ void fjson_free(fjson_t *fjson, int free_el)
         return;
 
     // TODO: FREE EL PLZ
-    if (fjson->sub)
-        fjson_free(fjson->sub, free_el);
+    if (fjson->child)
+        fjson_free(fjson->child, free_el);
 
     free(fjson->buf);
     free(fjson);
@@ -179,23 +179,24 @@ int fjson_state_object_key(fjson_t *fjson, char byte)
 
     int r;
 
-    if (!fjson->sub) {
-        fjson->sub = fjson_new();
-        fjson_putbyte(fjson->sub, '"');
+    if (!fjson->child) {
+        fjson->child = fjson_new();
+        fjson->father = fjson;
+        fjson_putbyte(fjson->child, '"');
     }
 
-    r = fjson_putbyte(fjson->sub, byte);
+    r = fjson_putbyte(fjson->child, byte);
 
     if (r == 0) // Still parsing
         return 0;
 
     if (r == 1) {
         fjson->state = FJSON_STATE_OBJECT_KEY_PARSED;
-        fjson_add_pair(fjson->el, fjson_pair_new(fjson->sub->el, 0));
+        fjson_add_pair(fjson->el, fjson_pair_new(fjson->child->el, 0));
     }
 
-    fjson_free(fjson->sub, 0);
-    fjson->sub = NULL;
+    fjson_free(fjson->child, 0);
+    fjson->child = NULL;
 
     if (r == -1)
         return -1;
@@ -207,30 +208,31 @@ int fjson_state_object_key(fjson_t *fjson, char byte)
 int fjson_state_object_value(fjson_t *fjson, char byte)
 {
 
-    if (!fjson->sub) { // Still not parsing the value
+    if (!fjson->child) { // Still not parsing the value
 
         if (fjson_is_blank(byte)) // If the byte is not a blank char the value has started
             return 0;
 
-        fjson->sub = fjson_new();
+        fjson->child = fjson_new();
+        fjson->father = fjson;
 
     }
 
-    if (fjson->sub) {
+    if (fjson->child) {
 
-        int r = fjson_putbyte(fjson->sub, byte);
+        int r = fjson_putbyte(fjson->child, byte);
 
         if (r == 0) // Still parsing
             return 0;
 
         if (r == 1) { // Successful parsing
             fjson_pair_t *last_pair = fjson_get_last_pair(fjson->el);
-            last_pair->value = fjson->sub->el;
+            last_pair->value = fjson->child->el;
             fjson->state = FJSON_STATE_OBJECT_AFTER_VALUE;
         }
 
-        fjson_free(fjson->sub, 0);
-        fjson->sub = NULL;
+        fjson_free(fjson->child, 0);
+        fjson->child = NULL;
 
         if (r == -1) // Parsing failed
             return -1;
@@ -248,20 +250,21 @@ int fjson_state_object_value(fjson_t *fjson, char byte)
 int fjson_state_array_value(fjson_t *fjson, char byte)
 {
 
-    if (!fjson->sub) {
+    if (!fjson->child) {
 
         if (fjson_is_blank(byte))
             return 0;
         else if (byte == ']')
             return 1;
 
-        fjson->sub = fjson_new();
+        fjson->child = fjson_new();
+        fjson->father = fjson;
 
     }
 
-    if (fjson->sub) {
+    if (fjson->child) {
 
-        int r = fjson_putbyte(fjson->sub, byte);
+        int r = fjson_putbyte(fjson->child, byte);
 
         if (r == 0) // Still parsing
             return 0;
@@ -269,18 +272,18 @@ int fjson_state_array_value(fjson_t *fjson, char byte)
         if (r == 1) { // Successful parsing
 
             if (!fjson->el->array) {
-                fjson->el->array = fjson_array_new(fjson->sub->el);
+                fjson->el->array = fjson_array_new(fjson->child->el);
             } else {
                 fjson_array_t *last_array = fjson_get_last_array(fjson->el);
-                last_array->next = fjson_array_new(fjson->sub->el);
+                last_array->next = fjson_array_new(fjson->child->el);
             }
 
             fjson->state = FJSON_STATE_ARRAY_AFTER_VALUE;
 
         }
 
-        fjson_free(fjson->sub, 0);
-        fjson->sub = NULL;
+        fjson_free(fjson->child, 0);
+        fjson->child = NULL;
 
         if (r == -1) // Parsing failed
             return -1;
@@ -297,7 +300,7 @@ int fjson_state_array_value(fjson_t *fjson, char byte)
 
 int fjson_putbyte(fjson_t *fjson, char byte)
 {
-
+    int r;
     switch (fjson->state) {
 
     case FJSON_STATE_ELEMENT:
@@ -378,8 +381,14 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     case FJSON_STATE_OBJECT_VALUE:
 
-        if (fjson_state_object_value(fjson, byte) == -1)
-            return -1;
+        r = fjson_state_object_value(fjson, byte);
+        if (fjson->father)
+            return r;
+        else {
+            if (r == -1)
+                return -1;
+            return 0;
+        }
 
         break;
 
