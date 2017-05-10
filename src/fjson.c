@@ -219,6 +219,7 @@ int fjson_state_object_value(fjson_t *fjson, char byte)
 
     if (fjson->child) {
 
+        int parsed_obj = 0;
         int r = fjson_putbyte(fjson->child, byte);
 
         if (r == 0) // Still parsing
@@ -228,6 +229,10 @@ int fjson_state_object_value(fjson_t *fjson, char byte)
             fjson_pair_t *last_pair = fjson_get_last_pair(fjson->el);
             last_pair->value = fjson->child->el;
             fjson->state = FJSON_STATE_OBJECT_AFTER_VALUE;
+
+            if (fjson->child->el->type == FJSON_TYPE_OBJECT)
+                parsed_obj = 1;
+
         }
 
         fjson_free(fjson->child);
@@ -238,8 +243,9 @@ int fjson_state_object_value(fjson_t *fjson, char byte)
 
         // r == 1, successful parsing
         // fjson->state is FJSON_STATE_OBJECT_AFTER_VALUE
-        if (byte == ',' || byte == '}')
+        if (byte == ',' || (byte == '}' && !parsed_obj) ) {
             return fjson_putbyte(fjson, byte);
+        }
 
     }
 

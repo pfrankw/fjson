@@ -66,6 +66,7 @@ typedef struct fjson_s {
     fjson_element_t *el;
     char *buf;
     size_t bi;
+    
     struct fjson_s *father;
     struct fjson_s *child;
 
