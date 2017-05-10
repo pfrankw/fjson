@@ -26,6 +26,47 @@ void fjson_free(fjson_t *fjson, int free_el)
     free(fjson);
 }
 
+void fjson_free_element(fjson_element_t *el)
+{
+
+    fjson_pair_t *cur_pair = 0;
+    fjson_array_t *array = 0;
+
+    if (!el)
+        return;
+
+
+    switch (el->type) {
+    case FJSON_TYPE_OBJECT:
+
+        cur_pair = el->pairs;
+        while (cur_pair) {
+            fjson_free_element(cur_pair->key);
+            fjson_free_element(cur_pair->value);
+            cur_pair = cur_pair->next;
+        }
+        break;
+
+    case FJSON_TYPE_ARRAY:
+
+        array = el->array;
+        while (array) {
+            fjson_free_element(array->el);
+            array = array->next;
+        }
+
+    case FJSON_TYPE_STRING:
+        free(el->str);
+        break;
+
+    default:
+        // Do nothing
+        break;
+    }
+
+    free(el);
+}
+
 fjson_pair_t* fjson_pair_new(fjson_element_t *key, fjson_element_t *value)
 {
 
