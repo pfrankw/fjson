@@ -11,7 +11,7 @@ fjson's API are just 5
 - fjson_free() Frees the `fjson_t` structure.
 - fjson_putbyte() Accepts one byte and processes it. Returns 0 on still-parsing, -1 on error, 1 on successful parsing.
 - fjson_putbuf() If you want to process entire buffers (even partial json documents are okay) you can call this function. It just uses fjson_putbyte() internally.
-- fjson_free_element() Recursively frees the `fjson_element_t`.
+- fjson_free_element() Recursively frees the `fjson_element_t` structure.
 
 ## How to use it
 As I said, this is a Finite State Machine parser that operates byte per byte.  
