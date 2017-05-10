@@ -3,7 +3,8 @@ Minimalist, recursive, Finite-State Machine JSON parser
 
 ## Overview
 fjson is a recursive Finite-State Machine JSON parser which operates on streams (byte per byte!) by keeping track internally
-of the current state of parsing.
+of the current state of parsing.  
+The compiled library is under 8 kilobytes.  
 
 ## API
 fjson's API are just 5
