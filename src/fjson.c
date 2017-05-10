@@ -269,6 +269,7 @@ int fjson_state_array_value(fjson_t *fjson, char byte)
 
     if (fjson->child) {
 
+        int parsed_array = 0;
         int r = fjson_putbyte(fjson->child, byte);
 
         if (r == 0) // Still parsing
@@ -285,6 +286,9 @@ int fjson_state_array_value(fjson_t *fjson, char byte)
 
             fjson->state = FJSON_STATE_ARRAY_AFTER_VALUE;
 
+            if (fjson->child->el->type == FJSON_TYPE_ARRAY)
+                parsed_array = 1;
+
         }
 
         fjson_free(fjson->child);
@@ -294,7 +298,7 @@ int fjson_state_array_value(fjson_t *fjson, char byte)
             return -1;
 
         // r == 1, successful parsing
-        if (byte == ',' || byte == ']')
+        if (byte == ',' || (byte == ']' && !parsed_array) )
             return fjson_putbyte(fjson, byte);
 
     }
