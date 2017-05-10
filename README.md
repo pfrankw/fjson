@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/pfrankw/fjson.svg?branch=master)](https://travis-ci.org/pfrankw/fjson)  
 # fjson
 Minimalist, recursive, Finite-State Machine JSON parser
 
