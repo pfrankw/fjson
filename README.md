@@ -36,6 +36,7 @@ When the type is FJSON_TYPE_NULL there is nothing inside the union to be checked
 
 
 ## Missing & TODO
+There is no support for unicode characters ("\uxxxx").  
 
 
 I hope to get everything done ASAP.  
