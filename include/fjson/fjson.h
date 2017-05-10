@@ -44,7 +44,6 @@ typedef struct fjson_element_s {
         struct fjson_array_s *array;
         struct fjson_pair_s *pairs;
         unsigned char bool_val;
-        void *content;
     };
 } fjson_element_t;
 
