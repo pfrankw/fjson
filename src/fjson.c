@@ -344,7 +344,6 @@ int fjson_putbyte(fjson_t *fjson, char byte)
             fjson_putbyte_buf(fjson, byte);
             break;
 
-        case '+':
         case '-':
         case '0':
         case '1':
