@@ -12,15 +12,14 @@ fjson_t* fjson_new(void)
     return fjson;
 }
 
-void fjson_free(fjson_t *fjson, int free_el)
+void fjson_free(fjson_t *fjson)
 {
 
     if (!fjson)
         return;
 
-    // TODO: FREE EL PLZ
     if (fjson->child)
-        fjson_free(fjson->child, free_el);
+        fjson_free(fjson->child);
 
     free(fjson->buf);
     free(fjson);
@@ -195,7 +194,7 @@ int fjson_state_object_key(fjson_t *fjson, char byte)
         fjson_add_pair(fjson->el, fjson_pair_new(fjson->child->el, 0));
     }
 
-    fjson_free(fjson->child, 0);
+    fjson_free(fjson->child);
     fjson->child = NULL;
 
     if (r == -1)
@@ -231,7 +230,7 @@ int fjson_state_object_value(fjson_t *fjson, char byte)
             fjson->state = FJSON_STATE_OBJECT_AFTER_VALUE;
         }
 
-        fjson_free(fjson->child, 0);
+        fjson_free(fjson->child);
         fjson->child = NULL;
 
         if (r == -1) // Parsing failed
@@ -282,7 +281,7 @@ int fjson_state_array_value(fjson_t *fjson, char byte)
 
         }
 
-        fjson_free(fjson->child, 0);
+        fjson_free(fjson->child);
         fjson->child = NULL;
 
         if (r == -1) // Parsing failed

@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     r = 0;
 cleanup:
     fjson_free_element(fjson->el);
-    fjson_free(fjson, 1);
+    fjson_free(fjson);
     free(json_buf);
     if (fp) fclose(fp);
     return r;

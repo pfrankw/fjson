@@ -72,7 +72,7 @@ typedef struct fjson_s {
 } fjson_t;
 
 fjson_t* fjson_new();
-void fjson_free(fjson_t *fjson, int free_el);
+void fjson_free(fjson_t *fjson);
 void fjson_free_element(fjson_element_t *el);
 
 // Return -1 on error, 0 on no error, 1 on completed parsing element.
