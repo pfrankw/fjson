@@ -444,8 +444,49 @@ int fjson_putbyte(fjson_t *fjson, char byte)
             fjson->buf = NULL;
             fjson->bi = 0;
             return 1;
+        } else if (byte == '\\') {
+            fjson->state = FJSON_STATE_SPEC_CHAR;
         } else
             fjson_putbyte_buf(fjson, byte);
+
+        break;
+
+    case FJSON_STATE_SPEC_CHAR:
+
+        switch (byte) {
+
+        case 'b':
+            fjson_putbyte_buf(fjson, '\b');
+            break;
+
+        case 'f':
+            fjson_putbyte_buf(fjson, '\f');
+            break;
+
+        case 'n':
+            fjson_putbyte_buf(fjson, '\n');
+            break;
+
+        case 'r':
+            fjson_putbyte_buf(fjson, '\r');
+            break;
+
+        case 't':
+            fjson_putbyte_buf(fjson, '\t');
+            break;
+
+        case '"':
+        case '\\':
+        case '/':
+            fjson_putbyte_buf(fjson, byte);
+            break;
+        
+        default:
+            return -1;
+            break;
+        }
+
+        fjson->state = FJSON_STATE_STRING; // Return to normal string state
 
         break;
 

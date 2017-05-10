@@ -36,7 +36,6 @@ When the type is FJSON_TYPE_NULL there is nothing inside the union to be checked
 
 
 ## Missing & TODO
-There is no support for special chars inside strings. Don't blame me, no time :(  
 There is no support for decimal numbers.  
 
 I hope to get everything done ASAP.  
