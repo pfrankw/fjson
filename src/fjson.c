@@ -59,7 +59,7 @@ void fjson_free_element(fjson_element_t *el)
             array = next;
         }
         break;
-        
+
     case FJSON_TYPE_STRING:
         free(el->str);
         break;
@@ -72,7 +72,7 @@ void fjson_free_element(fjson_element_t *el)
     free(el);
 }
 
-fjson_pair_t* fjson_pair_new(fjson_element_t *key, fjson_element_t *value)
+static fjson_pair_t* fjson_pair_new(fjson_element_t *key, fjson_element_t *value)
 {
 
     fjson_pair_t *pair = calloc(1, sizeof(fjson_pair_t));
@@ -83,7 +83,7 @@ fjson_pair_t* fjson_pair_new(fjson_element_t *key, fjson_element_t *value)
     return pair;
 }
 
-fjson_array_t* fjson_array_new(fjson_element_t *el)
+static fjson_array_t* fjson_array_new(fjson_element_t *el)
 {
 
     fjson_array_t *array = calloc(1, sizeof(fjson_array_t));
@@ -122,7 +122,7 @@ fjson_array_t* fjson_get_last_array(fjson_element_t *el)
 
 }
 
-void fjson_add_pair(fjson_element_t *el, fjson_pair_t *pair)
+static void fjson_add_pair(fjson_element_t *el, fjson_pair_t *pair)
 {
 
     pair->next = NULL;
@@ -140,12 +140,12 @@ void fjson_add_pair(fjson_element_t *el, fjson_pair_t *pair)
 
 }
 
-int fjson_is_blank(char byte)
+static int fjson_is_blank(char byte)
 {
     return (byte == ' ' || byte == '\n' || byte == '\t' || byte == '\r');
 }
 
-void fjson_putbyte_buf(fjson_t *fjson, char byte)
+static void fjson_putbyte_buf(fjson_t *fjson, char byte)
 {
 
     fjson->buf = realloc(fjson->buf, fjson->bi + 1);
@@ -154,7 +154,7 @@ void fjson_putbyte_buf(fjson_t *fjson, char byte)
 
 }
 
-void fjson_reset_buf(fjson_t *fjson)
+static void fjson_reset_buf(fjson_t *fjson)
 {
 
     free(fjson->buf);
@@ -163,7 +163,7 @@ void fjson_reset_buf(fjson_t *fjson)
 
 }
 
-int fjson_state_object_pair(fjson_t *fjson, char byte)
+static int fjson_state_object_pair(fjson_t *fjson, char byte)
 {
 
     if (fjson_is_blank(byte))
@@ -179,7 +179,7 @@ int fjson_state_object_pair(fjson_t *fjson, char byte)
 
 }
 
-int fjson_state_object_key(fjson_t *fjson, char byte)
+static int fjson_state_object_key(fjson_t *fjson, char byte)
 {
 
     int r;
@@ -210,7 +210,7 @@ int fjson_state_object_key(fjson_t *fjson, char byte)
 
 }
 
-int fjson_state_object_value(fjson_t *fjson, char byte)
+static int fjson_state_object_value(fjson_t *fjson, char byte)
 {
 
     if (!fjson->child) { // Still not parsing the value
@@ -258,7 +258,7 @@ int fjson_state_object_value(fjson_t *fjson, char byte)
     return 0;
 }
 
-int fjson_state_array_value(fjson_t *fjson, char byte)
+static int fjson_state_array_value(fjson_t *fjson, char byte)
 {
 
     if (!fjson->child) {
