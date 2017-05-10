@@ -40,7 +40,7 @@ typedef struct fjson_element_s {
     fjson_type_t type;
     union {
         char *str;
-        int64_t num;
+        double num;
         struct fjson_array_s *array;
         struct fjson_pair_s *pairs;
         unsigned char bool_val;
@@ -66,7 +66,7 @@ typedef struct fjson_s {
     fjson_element_t *el;
     char *buf;
     size_t bi;
-    
+
     struct fjson_s *father;
     struct fjson_s *child;
 

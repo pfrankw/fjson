@@ -344,6 +344,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
             fjson_putbyte_buf(fjson, byte);
             break;
 
+        case '.':
         case '+':
         case '-':
         case '0':
@@ -480,7 +481,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         case '/':
             fjson_putbyte_buf(fjson, byte);
             break;
-        
+
         default:
             return -1;
             break;
@@ -492,11 +493,11 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     case FJSON_STATE_NUMBER:
 
-        if (isdigit(byte)) {
+        if (isdigit(byte) || byte == '.') {
             fjson_putbyte_buf(fjson, byte);
         } else if (fjson_is_blank(byte) || byte == ',' || byte == '}' || byte == ']') {
             fjson_putbyte_buf(fjson, '\0');
-            fjson->el->num = strtoll(fjson->buf, 0, 0);
+            fjson->el->num = strtod(fjson->buf, 0);
             fjson_reset_buf(fjson);
             return 1;
         } else

@@ -62,7 +62,7 @@ void print_el(fjson_element_t *el)
         break;
 
     case FJSON_TYPE_NUMBER:
-        printf("%lld", el->num);
+        printf("%.2f", el->num);
         break;
 
     default:
