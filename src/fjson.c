@@ -53,10 +53,13 @@ void fjson_free_element(fjson_element_t *el)
 
         array = el->array;
         while (array) {
+            fjson_array_t *next = array->next;
             fjson_free_element(array->el);
-            array = array->next;
+            free(array);
+            array = next;
         }
-
+        break;
+        
     case FJSON_TYPE_STRING:
         free(el->str);
         break;
