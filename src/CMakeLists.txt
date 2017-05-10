@@ -1,3 +1,2 @@
-file( GLOB CSources *.c )
-add_library( fjson ${CSources} )
+add_library( fjson fjson.c )
 install( TARGETS fjson DESTINATION lib )
