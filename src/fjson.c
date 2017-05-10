@@ -41,9 +41,11 @@ void fjson_free_element(fjson_element_t *el)
 
         cur_pair = el->pairs;
         while (cur_pair) {
+            fjson_pair_t *next = cur_pair->next;
             fjson_free_element(cur_pair->key);
             fjson_free_element(cur_pair->value);
-            cur_pair = cur_pair->next;
+            free(cur_pair);
+            cur_pair = next;
         }
         break;
 
