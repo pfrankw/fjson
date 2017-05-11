@@ -186,7 +186,7 @@ static int state_object_key(fjson_t *fjson, char byte)
 
     if (!fjson->child) {
         fjson->child = fjson_new();
-        fjson->father = fjson;
+        fjson->child->father = fjson;
         fjson_putbyte(fjson->child, '"');
     }
 
@@ -219,7 +219,7 @@ static int state_object_value(fjson_t *fjson, char byte)
             return 0;
 
         fjson->child = fjson_new();
-        fjson->father = fjson;
+        fjson->child->father = fjson;
 
     }
 
@@ -269,7 +269,7 @@ static int state_array_value(fjson_t *fjson, char byte)
             return 1;
 
         fjson->child = fjson_new();
-        fjson->father = fjson;
+        fjson->child->father = fjson;
 
     }
 
