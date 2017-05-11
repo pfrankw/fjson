@@ -140,9 +140,9 @@ static void add_pair(fjson_element_t *el, fjson_pair_t *pair)
 
 }
 
-static int is_blank(char byte)
+static int is_whitespace(char byte)
 {
-    return (byte == ' ' || byte == '\n' || byte == '\t' || byte == '\r');
+    return isspace(byte);
 }
 
 static void write_buf(fjson_t *fjson, char byte)
@@ -166,7 +166,7 @@ static void reset_buf(fjson_t *fjson)
 static int state_object_pair(fjson_t *fjson, char byte)
 {
 
-    if (is_blank(byte))
+    if (is_whitespace(byte))
         return 0;
 
     if (byte == '"') {
@@ -217,7 +217,7 @@ static int state_object_value(fjson_t *fjson, char byte)
 
     if (!fjson->child) { // Still not parsing the value
 
-        if (is_blank(byte)) // If the byte is not a blank char the value has started
+        if (is_whitespace(byte)) // If the byte is not a blank char the value has started
             return 0;
 
         fjson->child = fjson_new();
@@ -262,7 +262,7 @@ static int state_array_value(fjson_t *fjson, char byte)
 
     if (!fjson->child) {
 
-        if (is_blank(byte))
+        if (is_whitespace(byte))
             return 0;
         else if (byte == ']')
             return 1;
@@ -372,7 +372,7 @@ static int state_element(fjson_t *fjson, char byte)
 static int state_object_key_parsed(fjson_t *fjson, char byte)
 {
 
-    if (is_blank(byte))
+    if (is_whitespace(byte))
         return 0;
 
     if (byte == ':') { // Blank chars and ':' are the only accepted bytes
@@ -386,7 +386,7 @@ static int state_object_key_parsed(fjson_t *fjson, char byte)
 static int state_object_after_value(fjson_t *fjson, char byte)
 {
 
-    if (is_blank(byte)) { // Blank chars are ignored
+    if (is_whitespace(byte)) { // Blank chars are ignored
         return 0;
     } else if (byte == ',') { // ',' means that we can wait for another pair
         fjson->state = FJSON_STATE_OBJECT_PAIR;
@@ -401,7 +401,7 @@ static int state_object_after_value(fjson_t *fjson, char byte)
 
 static int state_array_after_value(fjson_t *fjson, char byte)
 {
-    if (is_blank(byte)) {
+    if (is_whitespace(byte)) {
         return 0;
     } else if (byte == ',') {
         fjson->state = FJSON_STATE_ARRAY_VALUE;
@@ -473,7 +473,7 @@ static int state_number(fjson_t *fjson, char byte)
 {
     if (isdigit(byte) || byte == '.') {
         write_buf(fjson, byte);
-    } else if (is_blank(byte) || byte == ',' || byte == '}' || byte == ']') {
+    } else if (is_whitespace(byte) || byte == ',' || byte == '}' || byte == ']') {
         write_buf(fjson, '\0');
         fjson->el->num = strtod(fjson->buf, 0);
         reset_buf(fjson);
