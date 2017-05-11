@@ -168,20 +168,16 @@ static int is_number(char byte)
 
 static void write_buf(fjson_t *fjson, char byte)
 {
-
     fjson->buf = realloc(fjson->buf, fjson->bi + 1);
     fjson->buf[fjson->bi] = byte;
     fjson->bi++;
-
 }
 
 static void reset_buf(fjson_t *fjson)
 {
-
     free(fjson->buf);
     fjson->buf = 0;
     fjson->bi = 0;
-
 }
 
 static int state_object_pair(fjson_t *fjson, char byte)
