@@ -313,64 +313,225 @@ static int state_array_value(fjson_t *fjson, char byte)
 
 }
 
+static int state_element(fjson_t *fjson, char byte)
+{
+
+    switch (byte) {
+
+    case '{':
+        fjson->state = FJSON_STATE_OBJECT_PAIR;
+        fjson->el->type = FJSON_TYPE_OBJECT;
+        return 0;
+        break;
+
+    case '[':
+        fjson->state = FJSON_STATE_ARRAY_VALUE;
+        fjson->el->type = FJSON_TYPE_ARRAY;
+        return 0;
+        break;
+
+    case '"':
+        fjson->state = FJSON_STATE_STRING;
+        fjson->el->type = FJSON_TYPE_STRING;
+        return 0;
+        break;
+
+    case 't':
+    case 'f':
+        fjson->state = FJSON_STATE_BOOLEAN;
+        fjson->el->type = FJSON_TYPE_BOOLEAN;
+        write_buf(fjson, byte);
+        return 0;
+        break;
+
+    case 'n':
+        fjson->state = FJSON_STATE_NULL;
+        fjson->el->type = FJSON_TYPE_NULL;
+        write_buf(fjson, byte);
+        return 0;
+        break;
+
+    case '-':
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+        fjson->state = FJSON_STATE_NUMBER;
+        fjson->el->type = FJSON_TYPE_NUMBER;
+        write_buf(fjson, byte);
+        return 0;
+        break;
+
+    default:
+        return -1;
+        break;
+
+    }
+
+}
+
+static int state_object_key_parsed(fjson_t *fjson, char byte)
+{
+
+    if (is_blank(byte))
+        return 0;
+
+    if (byte == ':') { // Blank chars and ':' are the only accepted bytes
+        fjson->state = FJSON_STATE_OBJECT_VALUE;
+        return 0;
+    } else
+        return -1;
+
+}
+
+static int state_object_after_value(fjson_t *fjson, char byte)
+{
+
+    if (is_blank(byte)) { // Blank chars are ignored
+        return 0;
+    } else if (byte == ',') { // ',' means that we can wait for another pair
+        fjson->state = FJSON_STATE_OBJECT_PAIR;
+        return 0;
+    } else if (byte == '}') { // End of the object
+        return 1;
+    } else {    // Any other char is considered error
+        return -1;
+    }
+
+}
+
+static int state_array_after_value(fjson_t *fjson, char byte)
+{
+    if (is_blank(byte)) {
+        return 0;
+    } else if (byte == ',') {
+        fjson->state = FJSON_STATE_ARRAY_VALUE;
+        return 0;
+    } else if (byte == ']') {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
+static int state_string(fjson_t *fjson, char byte)
+{
+    if (byte == '"') {
+        write_buf(fjson, '\0');
+        fjson->el->str = fjson->buf;
+        fjson->buf = NULL;
+        fjson->bi = 0;
+        return 1;
+    } else if (byte == '\\') {
+        fjson->state = FJSON_STATE_SPEC_CHAR;
+    } else
+        write_buf(fjson, byte);
+
+    return 0;
+}
+
+static int state_spec_char(fjson_t *fjson, char byte)
+{
+    switch (byte) {
+
+    case 'b':
+        write_buf(fjson, '\b');
+        break;
+
+    case 'f':
+        write_buf(fjson, '\f');
+        break;
+
+    case 'n':
+        write_buf(fjson, '\n');
+        break;
+
+    case 'r':
+        write_buf(fjson, '\r');
+        break;
+
+    case 't':
+        write_buf(fjson, '\t');
+        break;
+
+    case '"':
+    case '\\':
+    case '/':
+        write_buf(fjson, byte);
+        break;
+
+    default:
+        return -1;
+        break;
+    }
+
+    fjson->state = FJSON_STATE_STRING; // Return to normal string state
+
+    return 0;
+}
+
+static int state_number(fjson_t *fjson, char byte)
+{
+    if (isdigit(byte) || byte == '.') {
+        write_buf(fjson, byte);
+    } else if (is_blank(byte) || byte == ',' || byte == '}' || byte == ']') {
+        write_buf(fjson, '\0');
+        fjson->el->num = strtod(fjson->buf, 0);
+        reset_buf(fjson);
+        return 1;
+    } else
+        return -1;
+
+    return 0;
+}
+
+static int state_boolean(fjson_t *fjson, char byte)
+{
+    write_buf(fjson, byte);
+
+    if (fjson->bi < 4) // Still parsing
+        return 0;
+
+    if (fjson->bi > 5) // Too much data
+        return -1;
+
+    if (fjson->bi == 4 && strncmp(fjson->buf, "true", 4) == 0) {
+        fjson->el->bool_val = 1;
+        reset_buf(fjson);
+        return 1;
+    } else if (fjson->bi == 5 && strncmp(fjson->buf, "false", 5) == 0) {
+        fjson->el->bool_val = 0;
+        reset_buf(fjson);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int state_null(fjson_t *fjson, char byte)
+{
+    write_buf(fjson, byte);
+    if (fjson->bi < 4) // Still parsing
+        return 0;
+
+    reset_buf(fjson);
+
+    return 1;
+}
+
 int fjson_putbyte(fjson_t *fjson, char byte)
 {
     int r;
     switch (fjson->state) {
 
     case FJSON_STATE_ELEMENT:
-
-        switch (byte) {
-
-        case '{':
-            fjson->state = FJSON_STATE_OBJECT_PAIR;
-            fjson->el->type = FJSON_TYPE_OBJECT;
-            break;
-
-        case '[':
-            fjson->state = FJSON_STATE_ARRAY_VALUE;
-            fjson->el->type = FJSON_TYPE_ARRAY;
-            break;
-
-        case '"':
-            fjson->state = FJSON_STATE_STRING;
-            fjson->el->type = FJSON_TYPE_STRING;
-            break;
-
-        case 't':
-        case 'f':
-            fjson->state = FJSON_STATE_BOOLEAN;
-            fjson->el->type = FJSON_TYPE_BOOLEAN;
-            write_buf(fjson, byte);
-            break;
-
-        case 'n':
-            fjson->state = FJSON_STATE_NULL;
-            fjson->el->type = FJSON_TYPE_NULL;
-            write_buf(fjson, byte);
-            break;
-
-        case '-':
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            fjson->state = FJSON_STATE_NUMBER;
-            fjson->el->type = FJSON_TYPE_NUMBER;
-            write_buf(fjson, byte);
-            break;
-
-        default:
-            return -1;
-            break;
-
-        }
+        return state_element(fjson, byte);
         break;
 
     case FJSON_STATE_OBJECT_PAIR:
@@ -382,15 +543,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         break;
 
     case FJSON_STATE_OBJECT_KEY_PARSED:
-
-        if (is_blank(byte))
-            return 0;
-
-        if (byte == ':') // Blank chars and ':' are the only accepted bytes
-            fjson->state = FJSON_STATE_OBJECT_VALUE;
-        else
-            return -1;
-
+        return state_object_key_parsed(fjson, byte);
         break;
 
     case FJSON_STATE_OBJECT_VALUE:
@@ -408,18 +561,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
 
     case FJSON_STATE_OBJECT_AFTER_VALUE:
-
-        if (is_blank(byte)) { // Blank chars are ignored
-            return 0;
-        } else if (byte == ',') { // ',' means that we can wait for another pair
-            fjson->state = FJSON_STATE_OBJECT_PAIR;
-            return 0;
-        } else if (byte == '}') { // End of the object
-            return 1;
-        } else {    // Any other char is considered error
-            return -1;
-        }
-
+        return state_object_after_value(fjson, byte);
         break;
 
     case FJSON_STATE_ARRAY_VALUE:
@@ -427,118 +569,27 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         break;
 
     case FJSON_STATE_ARRAY_AFTER_VALUE:
-
-        if (is_blank(byte)) {
-            return 0;
-        } else if (byte == ',') {
-            fjson->state = FJSON_STATE_ARRAY_VALUE;
-            return 0;
-        } else if (byte == ']') {
-            return 1;
-        } else {
-            return -1;
-        }
-
+        return state_array_after_value(fjson, byte);
         break;
 
     case FJSON_STATE_STRING:
-
-        if (byte == '"') {
-            write_buf(fjson, '\0');
-            fjson->el->str = fjson->buf;
-            fjson->buf = NULL;
-            fjson->bi = 0;
-            return 1;
-        } else if (byte == '\\') {
-            fjson->state = FJSON_STATE_SPEC_CHAR;
-        } else
-            write_buf(fjson, byte);
-
+        return state_string(fjson, byte);
         break;
 
     case FJSON_STATE_SPEC_CHAR:
-
-        switch (byte) {
-
-        case 'b':
-            write_buf(fjson, '\b');
-            break;
-
-        case 'f':
-            write_buf(fjson, '\f');
-            break;
-
-        case 'n':
-            write_buf(fjson, '\n');
-            break;
-
-        case 'r':
-            write_buf(fjson, '\r');
-            break;
-
-        case 't':
-            write_buf(fjson, '\t');
-            break;
-
-        case '"':
-        case '\\':
-        case '/':
-            write_buf(fjson, byte);
-            break;
-
-        default:
-            return -1;
-            break;
-        }
-
-        fjson->state = FJSON_STATE_STRING; // Return to normal string state
-
+        return state_spec_char(fjson, byte);
         break;
 
     case FJSON_STATE_NUMBER:
-
-        if (isdigit(byte) || byte == '.') {
-            write_buf(fjson, byte);
-        } else if (is_blank(byte) || byte == ',' || byte == '}' || byte == ']') {
-            write_buf(fjson, '\0');
-            fjson->el->num = strtod(fjson->buf, 0);
-            reset_buf(fjson);
-            return 1;
-        } else
-            return -1;
-
+        return state_number(fjson, byte);
         break;
 
     case FJSON_STATE_BOOLEAN:
-
-        write_buf(fjson, byte);
-        if (fjson->bi < 4) // Still parsing
-            return 0;
-
-        if (fjson->bi > 5) // Too much data
-            return -1;
-
-        if (fjson->bi == 4 && strncmp(fjson->buf, "true", 4) == 0) {
-            fjson->el->bool_val = 1;
-            reset_buf(fjson);
-            return 1;
-        } else if (fjson->bi == 5 && strncmp(fjson->buf, "false", 5) == 0) {
-            fjson->el->bool_val = 0;
-            reset_buf(fjson);
-            return 1;
-        }
-
+        return state_boolean(fjson, byte);
         break;
 
     case FJSON_STATE_NULL:
-
-        write_buf(fjson, byte);
-        if (fjson->bi < 4) // Still parsing
-            return 0;
-
-        reset_buf(fjson);
-
-        return 1;
+        return state_null(fjson, byte);
         break;
 
     default:
@@ -547,9 +598,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     }
 
-    return 0;
 }
-
 
 int fjson_putbuf(fjson_t *fjson, char *buf, size_t len)
 {
