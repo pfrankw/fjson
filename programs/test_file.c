@@ -96,7 +96,7 @@ int main(int argc, char **argv)
         goto cleanup;
 
     print_el(fjson->el);
-
+    printf("\n");
 
     r = 0;
 cleanup:
