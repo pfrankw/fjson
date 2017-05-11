@@ -93,7 +93,7 @@ static fjson_array_t* fjson_array_new(fjson_element_t *el)
     return array;
 }
 
-fjson_pair_t* fjson_get_last_pair(fjson_element_t *el)
+static fjson_pair_t* get_last_pair(fjson_element_t *el)
 {
 
     fjson_pair_t *last_pair = el->pairs;
@@ -107,7 +107,7 @@ fjson_pair_t* fjson_get_last_pair(fjson_element_t *el)
     return last_pair;
 }
 
-fjson_array_t* fjson_get_last_array(fjson_element_t *el)
+static fjson_array_t* get_last_array(fjson_element_t *el)
 {
 
     fjson_array_t *last_array = el->array;
@@ -122,7 +122,7 @@ fjson_array_t* fjson_get_last_array(fjson_element_t *el)
 
 }
 
-static void fjson_add_pair(fjson_element_t *el, fjson_pair_t *pair)
+static void add_pair(fjson_element_t *el, fjson_pair_t *pair)
 {
 
     pair->next = NULL;
@@ -133,19 +133,19 @@ static void fjson_add_pair(fjson_element_t *el, fjson_pair_t *pair)
 
     } else {
 
-        fjson_pair_t *last_pair = fjson_get_last_pair(el);
+        fjson_pair_t *last_pair = get_last_pair(el);
         last_pair->next = pair;
 
     }
 
 }
 
-static int fjson_is_blank(char byte)
+static int is_blank(char byte)
 {
     return (byte == ' ' || byte == '\n' || byte == '\t' || byte == '\r');
 }
 
-static void fjson_putbyte_buf(fjson_t *fjson, char byte)
+static void write_buf(fjson_t *fjson, char byte)
 {
 
     fjson->buf = realloc(fjson->buf, fjson->bi + 1);
@@ -154,7 +154,7 @@ static void fjson_putbyte_buf(fjson_t *fjson, char byte)
 
 }
 
-static void fjson_reset_buf(fjson_t *fjson)
+static void reset_buf(fjson_t *fjson)
 {
 
     free(fjson->buf);
@@ -163,10 +163,10 @@ static void fjson_reset_buf(fjson_t *fjson)
 
 }
 
-static int fjson_state_object_pair(fjson_t *fjson, char byte)
+static int state_object_pair(fjson_t *fjson, char byte)
 {
 
-    if (fjson_is_blank(byte))
+    if (is_blank(byte))
         return 0;
 
     if (byte == '"') {
@@ -179,7 +179,7 @@ static int fjson_state_object_pair(fjson_t *fjson, char byte)
 
 }
 
-static int fjson_state_object_key(fjson_t *fjson, char byte)
+static int state_object_key(fjson_t *fjson, char byte)
 {
 
     int r;
@@ -197,7 +197,7 @@ static int fjson_state_object_key(fjson_t *fjson, char byte)
 
     if (r == 1) {
         fjson->state = FJSON_STATE_OBJECT_KEY_PARSED;
-        fjson_add_pair(fjson->el, fjson_pair_new(fjson->child->el, 0));
+        add_pair(fjson->el, fjson_pair_new(fjson->child->el, 0));
     }
 
     fjson_free(fjson->child);
@@ -210,12 +210,12 @@ static int fjson_state_object_key(fjson_t *fjson, char byte)
 
 }
 
-static int fjson_state_object_value(fjson_t *fjson, char byte)
+static int state_object_value(fjson_t *fjson, char byte)
 {
 
     if (!fjson->child) { // Still not parsing the value
 
-        if (fjson_is_blank(byte)) // If the byte is not a blank char the value has started
+        if (is_blank(byte)) // If the byte is not a blank char the value has started
             return 0;
 
         fjson->child = fjson_new();
@@ -232,7 +232,7 @@ static int fjson_state_object_value(fjson_t *fjson, char byte)
             return 0;
 
         if (r == 1) { // Successful parsing
-            fjson_pair_t *last_pair = fjson_get_last_pair(fjson->el);
+            fjson_pair_t *last_pair = get_last_pair(fjson->el);
             last_pair->value = fjson->child->el;
             fjson->state = FJSON_STATE_OBJECT_AFTER_VALUE;
 
@@ -258,12 +258,12 @@ static int fjson_state_object_value(fjson_t *fjson, char byte)
     return 0;
 }
 
-static int fjson_state_array_value(fjson_t *fjson, char byte)
+static int state_array_value(fjson_t *fjson, char byte)
 {
 
     if (!fjson->child) {
 
-        if (fjson_is_blank(byte))
+        if (is_blank(byte))
             return 0;
         else if (byte == ']')
             return 1;
@@ -286,7 +286,7 @@ static int fjson_state_array_value(fjson_t *fjson, char byte)
             if (!fjson->el->array) {
                 fjson->el->array = fjson_array_new(fjson->child->el);
             } else {
-                fjson_array_t *last_array = fjson_get_last_array(fjson->el);
+                fjson_array_t *last_array = get_last_array(fjson->el);
                 last_array->next = fjson_array_new(fjson->child->el);
             }
 
@@ -341,13 +341,13 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         case 'f':
             fjson->state = FJSON_STATE_BOOLEAN;
             fjson->el->type = FJSON_TYPE_BOOLEAN;
-            fjson_putbyte_buf(fjson, byte);
+            write_buf(fjson, byte);
             break;
 
         case 'n':
             fjson->state = FJSON_STATE_NULL;
             fjson->el->type = FJSON_TYPE_NULL;
-            fjson_putbyte_buf(fjson, byte);
+            write_buf(fjson, byte);
             break;
 
         case '-':
@@ -363,7 +363,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         case '9':
             fjson->state = FJSON_STATE_NUMBER;
             fjson->el->type = FJSON_TYPE_NUMBER;
-            fjson_putbyte_buf(fjson, byte);
+            write_buf(fjson, byte);
             break;
 
         default:
@@ -374,16 +374,16 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         break;
 
     case FJSON_STATE_OBJECT_PAIR:
-        return fjson_state_object_pair(fjson, byte);
+        return state_object_pair(fjson, byte);
         break;
 
     case FJSON_STATE_OBJECT_KEY:
-        return fjson_state_object_key(fjson, byte);
+        return state_object_key(fjson, byte);
         break;
 
     case FJSON_STATE_OBJECT_KEY_PARSED:
 
-        if (fjson_is_blank(byte))
+        if (is_blank(byte))
             return 0;
 
         if (byte == ':') // Blank chars and ':' are the only accepted bytes
@@ -395,7 +395,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     case FJSON_STATE_OBJECT_VALUE:
 
-        r = fjson_state_object_value(fjson, byte);
+        r = state_object_value(fjson, byte);
         if (fjson->father)
             return r;
         else {
@@ -409,7 +409,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     case FJSON_STATE_OBJECT_AFTER_VALUE:
 
-        if (fjson_is_blank(byte)) { // Blank chars are ignored
+        if (is_blank(byte)) { // Blank chars are ignored
             return 0;
         } else if (byte == ',') { // ',' means that we can wait for another pair
             fjson->state = FJSON_STATE_OBJECT_PAIR;
@@ -423,12 +423,12 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         break;
 
     case FJSON_STATE_ARRAY_VALUE:
-        return fjson_state_array_value(fjson, byte);
+        return state_array_value(fjson, byte);
         break;
 
     case FJSON_STATE_ARRAY_AFTER_VALUE:
 
-        if (fjson_is_blank(byte)) {
+        if (is_blank(byte)) {
             return 0;
         } else if (byte == ',') {
             fjson->state = FJSON_STATE_ARRAY_VALUE;
@@ -444,7 +444,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
     case FJSON_STATE_STRING:
 
         if (byte == '"') {
-            fjson_putbyte_buf(fjson, '\0');
+            write_buf(fjson, '\0');
             fjson->el->str = fjson->buf;
             fjson->buf = NULL;
             fjson->bi = 0;
@@ -452,7 +452,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         } else if (byte == '\\') {
             fjson->state = FJSON_STATE_SPEC_CHAR;
         } else
-            fjson_putbyte_buf(fjson, byte);
+            write_buf(fjson, byte);
 
         break;
 
@@ -461,29 +461,29 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         switch (byte) {
 
         case 'b':
-            fjson_putbyte_buf(fjson, '\b');
+            write_buf(fjson, '\b');
             break;
 
         case 'f':
-            fjson_putbyte_buf(fjson, '\f');
+            write_buf(fjson, '\f');
             break;
 
         case 'n':
-            fjson_putbyte_buf(fjson, '\n');
+            write_buf(fjson, '\n');
             break;
 
         case 'r':
-            fjson_putbyte_buf(fjson, '\r');
+            write_buf(fjson, '\r');
             break;
 
         case 't':
-            fjson_putbyte_buf(fjson, '\t');
+            write_buf(fjson, '\t');
             break;
 
         case '"':
         case '\\':
         case '/':
-            fjson_putbyte_buf(fjson, byte);
+            write_buf(fjson, byte);
             break;
 
         default:
@@ -498,11 +498,11 @@ int fjson_putbyte(fjson_t *fjson, char byte)
     case FJSON_STATE_NUMBER:
 
         if (isdigit(byte) || byte == '.') {
-            fjson_putbyte_buf(fjson, byte);
-        } else if (fjson_is_blank(byte) || byte == ',' || byte == '}' || byte == ']') {
-            fjson_putbyte_buf(fjson, '\0');
+            write_buf(fjson, byte);
+        } else if (is_blank(byte) || byte == ',' || byte == '}' || byte == ']') {
+            write_buf(fjson, '\0');
             fjson->el->num = strtod(fjson->buf, 0);
-            fjson_reset_buf(fjson);
+            reset_buf(fjson);
             return 1;
         } else
             return -1;
@@ -511,7 +511,7 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     case FJSON_STATE_BOOLEAN:
 
-        fjson_putbyte_buf(fjson, byte);
+        write_buf(fjson, byte);
         if (fjson->bi < 4) // Still parsing
             return 0;
 
@@ -520,11 +520,11 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
         if (fjson->bi == 4 && strncmp(fjson->buf, "true", 4) == 0) {
             fjson->el->bool_val = 1;
-            fjson_reset_buf(fjson);
+            reset_buf(fjson);
             return 1;
         } else if (fjson->bi == 5 && strncmp(fjson->buf, "false", 5) == 0) {
             fjson->el->bool_val = 0;
-            fjson_reset_buf(fjson);
+            reset_buf(fjson);
             return 1;
         }
 
@@ -532,11 +532,11 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     case FJSON_STATE_NULL:
 
-        fjson_putbyte_buf(fjson, byte);
+        write_buf(fjson, byte);
         if (fjson->bi < 4) // Still parsing
             return 0;
 
-        fjson_reset_buf(fjson);
+        reset_buf(fjson);
 
         return 1;
         break;
