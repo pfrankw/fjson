@@ -83,7 +83,7 @@ fjson_t* fjson_new();
 void fjson_free(fjson_t *fjson);
 void fjson_free_element(fjson_element_t *el);
 
-// Given an element with type FJSON_TYPE_OBJECT and a key it searches for a value with the
+// Given an element with type FJSON_TYPE_OBJECT and a key it returns the value (if present).
 fjson_element_t* fjson_get_value_by_key(fjson_element_t *obj, const char *key);
 
 // Return -1 on error, 0 on no error, 1 on completed parsing element.
