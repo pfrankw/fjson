@@ -556,7 +556,6 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         break;
     }
 
-
     case FJSON_STATE_OBJECT_AFTER_VALUE:
         return state_object_after_value(fjson, byte);
         break;
