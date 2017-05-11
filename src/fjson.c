@@ -212,6 +212,8 @@ static int state_object_key(fjson_t *fjson, char byte)
 
 static int state_object_value(fjson_t *fjson, char byte)
 {
+    int parsed_obj = 0;
+    int r;
 
     if (!fjson->child) { // Still not parsing the value
 
@@ -223,36 +225,31 @@ static int state_object_value(fjson_t *fjson, char byte)
 
     }
 
-    if (fjson->child) {
+    r = fjson_putbyte(fjson->child, byte);
 
-        int parsed_obj = 0;
-        int r = fjson_putbyte(fjson->child, byte);
+    if (r == 0) // Still parsing
+        return 0;
 
-        if (r == 0) // Still parsing
-            return 0;
+    if (r == 1) { // Successful parsing
+        fjson_pair_t *last_pair = get_last_pair(fjson->el);
+        last_pair->value = fjson->child->el;
+        fjson->state = FJSON_STATE_OBJECT_AFTER_VALUE;
 
-        if (r == 1) { // Successful parsing
-            fjson_pair_t *last_pair = get_last_pair(fjson->el);
-            last_pair->value = fjson->child->el;
-            fjson->state = FJSON_STATE_OBJECT_AFTER_VALUE;
+        if (fjson->child->el->type == FJSON_TYPE_OBJECT)
+            parsed_obj = 1;
 
-            if (fjson->child->el->type == FJSON_TYPE_OBJECT)
-                parsed_obj = 1;
+    }
 
-        }
+    fjson_free(fjson->child);
+    fjson->child = NULL;
 
-        fjson_free(fjson->child);
-        fjson->child = NULL;
+    if (r == -1) // Parsing failed
+        return -1;
 
-        if (r == -1) // Parsing failed
-            return -1;
-
-        // r == 1, successful parsing
-        // fjson->state is FJSON_STATE_OBJECT_AFTER_VALUE
-        if (byte == ',' || (byte == '}' && !parsed_obj) ) {
-            return fjson_putbyte(fjson, byte);
-        }
-
+    // r == 1, successful parsing
+    // fjson->state is FJSON_STATE_OBJECT_AFTER_VALUE
+    if (byte == ',' || (byte == '}' && !parsed_obj) ) {
+        return fjson_putbyte(fjson, byte);
     }
 
     return 0;
@@ -260,6 +257,8 @@ static int state_object_value(fjson_t *fjson, char byte)
 
 static int state_array_value(fjson_t *fjson, char byte)
 {
+    int parsed_array = 0;
+    int r;
 
     if (!fjson->child) {
 
@@ -273,44 +272,38 @@ static int state_array_value(fjson_t *fjson, char byte)
 
     }
 
-    if (fjson->child) {
+    r = fjson_putbyte(fjson->child, byte);
 
-        int parsed_array = 0;
-        int r = fjson_putbyte(fjson->child, byte);
+    if (r == 0) // Still parsing
+        return 0;
 
-        if (r == 0) // Still parsing
-            return 0;
+    if (r == 1) { // Successful parsing
 
-        if (r == 1) { // Successful parsing
-
-            if (!fjson->el->array) {
-                fjson->el->array = array_new(fjson->child->el);
-            } else {
-                fjson_array_t *last_array = get_last_array(fjson->el);
-                last_array->next = array_new(fjson->child->el);
-            }
-
-            fjson->state = FJSON_STATE_ARRAY_AFTER_VALUE;
-
-            if (fjson->child->el->type == FJSON_TYPE_ARRAY)
-                parsed_array = 1;
-
+        if (!fjson->el->array) {
+            fjson->el->array = array_new(fjson->child->el);
+        } else {
+            fjson_array_t *last_array = get_last_array(fjson->el);
+            last_array->next = array_new(fjson->child->el);
         }
 
-        fjson_free(fjson->child);
-        fjson->child = NULL;
+        fjson->state = FJSON_STATE_ARRAY_AFTER_VALUE;
 
-        if (r == -1) // Parsing failed
-            return -1;
-
-        // r == 1, successful parsing
-        if (byte == ',' || (byte == ']' && !parsed_array) )
-            return fjson_putbyte(fjson, byte);
+        if (fjson->child->el->type == FJSON_TYPE_ARRAY)
+            parsed_array = 1;
 
     }
 
-    return 0;
+    fjson_free(fjson->child);
+    fjson->child = NULL;
 
+    if (r == -1) // Parsing failed
+        return -1;
+
+    // r == 1, successful parsing
+    if (byte == ',' || (byte == ']' && !parsed_array) )
+        return fjson_putbyte(fjson, byte);
+
+    return 0;
 }
 
 static int state_element(fjson_t *fjson, char byte)
