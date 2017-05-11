@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -160,6 +159,11 @@ static void add_pair(fjson_element_t *el, fjson_pair_t *pair)
 static int is_whitespace(char byte)
 {
     return (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\v' || byte == '\f' || byte == '\r' );
+}
+
+static int is_number(char byte)
+{
+    return (byte >= 0x30 && byte <= 0x39);
 }
 
 static void write_buf(fjson_t *fjson, char byte)
@@ -488,7 +492,7 @@ static int state_spec_char(fjson_t *fjson, char byte)
 
 static int state_number(fjson_t *fjson, char byte)
 {
-    if (isdigit(byte) || byte == '.') {
+    if (is_number(byte) || byte == '.') {
         write_buf(fjson, byte);
     } else if (is_whitespace(byte) || byte == ',' || byte == '}' || byte == ']') {
         write_buf(fjson, '\0');
