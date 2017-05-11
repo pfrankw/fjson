@@ -527,7 +527,6 @@ static int state_null(fjson_t *fjson, char byte)
 
 int fjson_putbyte(fjson_t *fjson, char byte)
 {
-    int r;
     switch (fjson->state) {
 
     case FJSON_STATE_ELEMENT:
@@ -546,15 +545,16 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         return state_object_key_parsed(fjson, byte);
         break;
 
-    case FJSON_STATE_OBJECT_VALUE:
+    case FJSON_STATE_OBJECT_VALUE: {
 
-        r = state_object_value(fjson, byte);
+        int r = state_object_value(fjson, byte);
         if (!fjson->father) {
             return (r == -1) ? -1 : 0;
         } else
             return r;
 
         break;
+    }
 
 
     case FJSON_STATE_OBJECT_AFTER_VALUE:
