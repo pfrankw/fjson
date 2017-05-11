@@ -72,6 +72,23 @@ void fjson_free_element(fjson_element_t *el)
     free(el);
 }
 
+fjson_element_t* fjson_get_value_by_key(fjson_element_t *obj, const char *key)
+{
+    fjson_pair_t *cur_pair;
+
+    if (obj->type != FJSON_TYPE_OBJECT)
+        return 0;
+
+    cur_pair = obj->pairs;
+
+    for(; cur_pair; cur_pair = cur_pair->next){
+        if (strcmp(cur_pair->key->str, key) == 0)
+            return cur_pair->value;
+    }
+
+    return 0;
+}
+
 static fjson_pair_t* pair_new(fjson_element_t *key, fjson_element_t *value)
 {
 
@@ -142,7 +159,7 @@ static void add_pair(fjson_element_t *el, fjson_pair_t *pair)
 
 static int is_whitespace(char byte)
 {
-    return isspace(byte);
+    return (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\v' || byte == '\f' || byte == '\r' );
 }
 
 static void write_buf(fjson_t *fjson, char byte)

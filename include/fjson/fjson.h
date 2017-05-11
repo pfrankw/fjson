@@ -39,15 +39,23 @@ struct fjson_array_s;
 typedef struct fjson_element_s {
     fjson_type_t type;
     union {
-        char *str;
-        double num;
-        struct fjson_array_s *array;
-        struct fjson_pair_s *pairs;
-        unsigned char bool_val;
+        char *str; // type == FJSON_TYPE_STRING
+        double num; // type == FJSON_TYPE_NUMBER
+        struct fjson_array_s *array; // type == FJSON_TYPE_ARRAY
+        struct fjson_pair_s *pairs; // type == FJSON_TYPE_OBJECT
+        unsigned char bool_val; // type == FJSON_TYPE_BOOLEAN
     };
 } fjson_element_t;
 
-// Object key: value
+/*
+{
+    "key": "string", <--- PAIR
+    "key2": 12345, <--- PAIR
+    "key3": {...}, <--- PAIR
+    "key4": [...], <--- PAIR
+}
+*/
+
 typedef struct fjson_pair_s {
     fjson_element_t *key;
     fjson_element_t *value;
@@ -75,9 +83,11 @@ fjson_t* fjson_new();
 void fjson_free(fjson_t *fjson);
 void fjson_free_element(fjson_element_t *el);
 
+// Given an element with type FJSON_TYPE_OBJECT and a key it searches for a value with the
+fjson_element_t* fjson_get_value_by_key(fjson_element_t *obj, const char *key);
+
 // Return -1 on error, 0 on no error, 1 on completed parsing element.
 // On error all the fjson_putbyte call chain returns error.
-
 int fjson_putbyte(fjson_t *fjson, char byte);
 int fjson_putbuf(fjson_t *fjson, char *buf, size_t len);
 
