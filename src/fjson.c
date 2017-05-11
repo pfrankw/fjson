@@ -549,13 +549,10 @@ int fjson_putbyte(fjson_t *fjson, char byte)
     case FJSON_STATE_OBJECT_VALUE:
 
         r = state_object_value(fjson, byte);
-        if (fjson->father)
+        if (!fjson->father) {
+            return (r == -1) ? -1 : 0;
+        } else
             return r;
-        else {
-            if (r == -1)
-                return -1;
-            return 0;
-        }
 
         break;
 
