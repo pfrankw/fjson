@@ -72,7 +72,7 @@ void fjson_free_element(fjson_element_t *el)
     free(el);
 }
 
-static fjson_pair_t* fjson_pair_new(fjson_element_t *key, fjson_element_t *value)
+static fjson_pair_t* pair_new(fjson_element_t *key, fjson_element_t *value)
 {
 
     fjson_pair_t *pair = calloc(1, sizeof(fjson_pair_t));
@@ -83,7 +83,7 @@ static fjson_pair_t* fjson_pair_new(fjson_element_t *key, fjson_element_t *value
     return pair;
 }
 
-static fjson_array_t* fjson_array_new(fjson_element_t *el)
+static fjson_array_t* array_new(fjson_element_t *el)
 {
 
     fjson_array_t *array = calloc(1, sizeof(fjson_array_t));
@@ -197,7 +197,7 @@ static int state_object_key(fjson_t *fjson, char byte)
 
     if (r == 1) {
         fjson->state = FJSON_STATE_OBJECT_KEY_PARSED;
-        add_pair(fjson->el, fjson_pair_new(fjson->child->el, 0));
+        add_pair(fjson->el, pair_new(fjson->child->el, 0));
     }
 
     fjson_free(fjson->child);
@@ -284,10 +284,10 @@ static int state_array_value(fjson_t *fjson, char byte)
         if (r == 1) { // Successful parsing
 
             if (!fjson->el->array) {
-                fjson->el->array = fjson_array_new(fjson->child->el);
+                fjson->el->array = array_new(fjson->child->el);
             } else {
                 fjson_array_t *last_array = get_last_array(fjson->el);
-                last_array->next = fjson_array_new(fjson->child->el);
+                last_array->next = array_new(fjson->child->el);
             }
 
             fjson->state = FJSON_STATE_ARRAY_AFTER_VALUE;
