@@ -460,7 +460,7 @@ static int state_spec_char(fjson_t *fjson, char byte)
 
 static int state_number(fjson_t *fjson, char byte)
 {
-    if (is_number(byte) || byte == '.') {
+    if (is_number(byte) || byte == '.' || byte == 'e' || byte == 'E' || byte == '-' || byte == '+') {
         write_buf(fjson, byte);
     } else if (is_whitespace(byte) || byte == ',' || byte == '}' || byte == ']') {
         write_buf(fjson, '\0');
