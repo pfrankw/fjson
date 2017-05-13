@@ -530,6 +530,9 @@ static int state_null(fjson_t *fjson, char byte)
     if (fjson->bi < 4) // Still parsing
         return 0;
 
+    if (strncmp(fjson->buf, "null", 4) != 0)
+        return -1;
+
     reset_buf(fjson);
 
     return 1;
