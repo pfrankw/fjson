@@ -179,33 +179,25 @@ static void reset_buf(fjson_t *fjson)
     fjson->bi = 0;
 }
 
-static int state_object_pair(fjson_t *fjson, char byte)
-{
-
-    if (is_whitespace(byte))
-        return 0;
-
-    if (byte == '"') {
-        fjson->state = FJSON_STATE_OBJECT_KEY;
-        return 0;
-    } else if (byte == '}')
-        return 1;
-    else
-        return -1;
-
-}
-
 static int state_object_key(fjson_t *fjson, char byte)
 {
 
     int r;
 
     if (!fjson->child) {
-        fjson->child = fjson_new();
-        fjson->child->father = fjson;
-        fjson_putbyte(fjson->child, '"');
+        
+        if (is_whitespace(byte))
+            return 0;
+        else if (byte == '}')
+            return 1;
+        else if (byte == '"') {
+            fjson->child = fjson_new();
+            fjson->child->father = fjson;
+        } else
+            return -1;
     }
 
+    // The first time this is called the byte is always '"'
     r = fjson_putbyte(fjson->child, byte);
 
     if (r == 0) // Still parsing
@@ -322,7 +314,7 @@ static int state_object_array_after_value(fjson_t *fjson, char byte)
     if (is_whitespace(byte)) { // Blank chars are ignored
         return 0;
     } else if (byte == ',') { // ',' means that we can wait for another pair
-        fjson->state = (fjson->state == FJSON_STATE_OBJECT_AFTER_VALUE) ? FJSON_STATE_OBJECT_PAIR : FJSON_STATE_ARRAY_VALUE;
+        fjson->state = (fjson->state == FJSON_STATE_OBJECT_AFTER_VALUE) ? FJSON_STATE_OBJECT_KEY : FJSON_STATE_ARRAY_VALUE;
         return 0;
     } else if ( (fjson->state == FJSON_STATE_OBJECT_AFTER_VALUE && byte == '}') || (fjson->state == FJSON_STATE_ARRAY_AFTER_VALUE && byte == ']') ) { // End of the object
         return 1;
@@ -338,7 +330,7 @@ static int state_element(fjson_t *fjson, char byte)
     switch (byte) {
 
     case '{':
-        fjson->state = FJSON_STATE_OBJECT_PAIR;
+        fjson->state = FJSON_STATE_OBJECT_KEY;
         fjson->el->type = FJSON_TYPE_OBJECT;
         return 0;
         break;
@@ -509,10 +501,6 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 
     case FJSON_STATE_ELEMENT:
         return state_element(fjson, byte);
-        break;
-
-    case FJSON_STATE_OBJECT_PAIR:
-        return state_object_pair(fjson, byte);
         break;
 
     case FJSON_STATE_OBJECT_KEY:
