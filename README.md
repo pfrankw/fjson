@@ -16,7 +16,7 @@ fjson's API are just 5
 - fjson_free_element() Recursively frees the `fjson_element_t` structure.
 
 ## How to use it
-As I said, this is a Finite State Machine parser that operates byte per byte.  
+This is a Finite State Machine parser that operates byte per byte.  
 This means that you can literally start to download a json document and parsing it on-the-fly without the need of caching it.  
 It is easy:  
 1. Allocate the `fjson_t`structure
