@@ -7,7 +7,7 @@ of the current state of parsing.
 The compiled library is under 6 kilobytes.  
 
 ## API
-fjson's API are just 5
+fjson's APIs are just 6
 - fjson_new() Allocates a new `fjson_t` structure.
 - fjson_free() Frees the `fjson_t` structure.
 - fjson_get_value_by_key() Given an element with type FJSON_TYPE_OBJECT, and a key, it returns the value (if present).
