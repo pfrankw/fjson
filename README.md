@@ -19,7 +19,7 @@ fjson's API are just 5
 This is a Finite State Machine parser that operates byte per byte.  
 This means that you can literally start to download a json document and parsing it on-the-fly without the need of caching it.  
 It is easy:  
-1. Allocate the `fjson_t`structure
+1. Allocate the `fjson_t` structure
 2. When you have one byte or a buffer, just process it using the fjson_putbyte() or fjson_putbuf() APIs.
 3. Once finished the parsing you can access the `fjson_t`->el which is the parsed `fjson_element_t` structure and then you can free the `fjson_t` structure.
 4. Walk the `fjson_element_t` structure and search for what you want.
