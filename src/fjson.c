@@ -185,7 +185,7 @@ static int state_object_key(fjson_t *fjson, char byte)
     int r;
 
     if (!fjson->child) {
-        
+
         if (is_whitespace(byte))
             return 0;
         else if (byte == '}')
@@ -193,11 +193,12 @@ static int state_object_key(fjson_t *fjson, char byte)
         else if (byte == '"') {
             fjson->child = fjson_new();
             fjson->child->father = fjson;
+            fjson_putbyte(fjson->child, '"');
+            return 0;
         } else
             return -1;
     }
 
-    // The first time this is called the byte is always '"'
     r = fjson_putbyte(fjson->child, byte);
 
     if (r == 0) // Still parsing
