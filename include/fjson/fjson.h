@@ -3,23 +3,6 @@
 
 #include <stdlib.h>
 
-
-// STATES
-typedef enum {
-    FJSON_STATE_ELEMENT,
-    FJSON_STATE_OBJECT_KEY,
-    FJSON_STATE_OBJECT_KEY_PARSED,
-    FJSON_STATE_OBJECT_VALUE,
-    FJSON_STATE_OBJECT_AFTER_VALUE,
-    FJSON_STATE_ARRAY_VALUE,
-    FJSON_STATE_ARRAY_AFTER_VALUE,
-    FJSON_STATE_STRING,
-    FJSON_STATE_SPEC_CHAR,
-    FJSON_STATE_NUMBER,
-    FJSON_STATE_BOOLEAN,
-    FJSON_STATE_NULL
-} fjson_state_t;
-
 // TYPES
 typedef enum {
     FJSON_TYPE_UNKNOWN,
@@ -68,7 +51,7 @@ typedef struct fjson_array_s {
 
 typedef struct fjson_s {
 
-    fjson_state_t state;
+    int state;
     fjson_element_t *el;
     char *buf;
     size_t bi;

@@ -3,11 +3,25 @@
 
 #include <fjson/fjson.h>
 
+enum {
+    STATE_ELEMENT,
+    STATE_OBJECT_KEY,
+    STATE_OBJECT_KEY_PARSED,
+    STATE_OBJECT_VALUE,
+    STATE_OBJECT_AFTER_VALUE,
+    STATE_ARRAY_VALUE,
+    STATE_ARRAY_AFTER_VALUE,
+    STATE_STRING,
+    STATE_SPEC_CHAR,
+    STATE_NUMBER,
+    STATE_BOOLEAN,
+    STATE_NULL
+};
 
 fjson_t* fjson_new(void)
 {
     fjson_t *fjson = calloc(1, sizeof(fjson_t));
-    fjson->state = FJSON_STATE_ELEMENT;
+    fjson->state = STATE_ELEMENT;
     fjson->el = calloc(1, sizeof(fjson_element_t));
     return fjson;
 }
@@ -205,7 +219,7 @@ static int state_object_key(fjson_t *fjson, char byte)
         return 0;
 
     if (r == 1) {
-        fjson->state = FJSON_STATE_OBJECT_KEY_PARSED;
+        fjson->state = STATE_OBJECT_KEY_PARSED;
         add_pair(fjson->el, pair_new(fjson->child->el, 0));
     }
 
@@ -226,7 +240,7 @@ static int state_object_key_parsed(fjson_t *fjson, char byte)
         return 0;
 
     if (byte == ':') { // Blank chars and ':' are the only accepted bytes
-        fjson->state = FJSON_STATE_OBJECT_VALUE;
+        fjson->state = STATE_OBJECT_VALUE;
         return 0;
     } else
         return -1;
@@ -238,7 +252,7 @@ static void take_child_object(fjson_t *fjson)
     fjson_pair_t *last_pair = get_last_pair(fjson->el);
     last_pair->value = fjson->child->el;
 
-    fjson->state = FJSON_STATE_OBJECT_AFTER_VALUE;
+    fjson->state = STATE_OBJECT_AFTER_VALUE;
 }
 
 static void take_child_array(fjson_t *fjson)
@@ -251,10 +265,10 @@ static void take_child_array(fjson_t *fjson)
         last_array->next = array_new(fjson->child->el);
     }
 
-    fjson->state = FJSON_STATE_ARRAY_AFTER_VALUE;
+    fjson->state = STATE_ARRAY_AFTER_VALUE;
 }
 
-// Called on FJSON_STATE_ARRAY_VALUE or FJSON_STATE_OBJECT_VALUE
+// Called on STATE_ARRAY_VALUE or STATE_OBJECT_VALUE
 static int state_object_array_value(fjson_t *fjson, char byte)
 {
     int parsed_same_type = 0;
@@ -265,7 +279,7 @@ static int state_object_array_value(fjson_t *fjson, char byte)
         if (is_whitespace(byte)) // If the byte is not a blank char the value has started
             return 0;
 
-        if (fjson->state == FJSON_STATE_ARRAY_VALUE && byte == ']' )
+        if (fjson->state == STATE_ARRAY_VALUE && byte == ']' )
             return 1;
 
         fjson->child = fjson_new();
@@ -280,9 +294,9 @@ static int state_object_array_value(fjson_t *fjson, char byte)
 
     if (r == 1) { // Successful parsing
 
-        if (fjson->state == FJSON_STATE_OBJECT_VALUE)
+        if (fjson->state == STATE_OBJECT_VALUE)
             take_child_object(fjson);
-        else if (fjson->state == FJSON_STATE_ARRAY_VALUE)
+        else if (fjson->state == STATE_ARRAY_VALUE)
             take_child_array(fjson);
 
         if (fjson->child->el->type == fjson->el->type )
@@ -297,27 +311,27 @@ static int state_object_array_value(fjson_t *fjson, char byte)
         return -1;
 
     // r == 1, successful parsing
-    // fjson->state is FJSON_STATE_OBJECT_AFTER_VALUE or FJSON_STATE_ARRAY_AFTER_VALUE
-    if (fjson->state == FJSON_STATE_OBJECT_AFTER_VALUE) {
+    // fjson->state is STATE_OBJECT_AFTER_VALUE or STATE_ARRAY_AFTER_VALUE
+    if (fjson->state == STATE_OBJECT_AFTER_VALUE) {
         if (byte == ',' || (byte == '}' && !parsed_same_type) )
             return fjson_putbyte(fjson, byte);
-    } else if (fjson->state == FJSON_STATE_ARRAY_AFTER_VALUE) {
+    } else if (fjson->state == STATE_ARRAY_AFTER_VALUE) {
         if (byte == ',' || (byte == ']' && !parsed_same_type) )
             return fjson_putbyte(fjson, byte);
     }
     return 0;
 }
 
-// Called on FJSON_STATE_ARRAY_VALUE or FJSON_STATE_OBJECT_VALUE
+// Called on STATE_ARRAY_VALUE or STATE_OBJECT_VALUE
 static int state_object_array_after_value(fjson_t *fjson, char byte)
 {
 
     if (is_whitespace(byte)) { // Blank chars are ignored
         return 0;
     } else if (byte == ',') { // ',' means that we can wait for another pair
-        fjson->state = (fjson->state == FJSON_STATE_OBJECT_AFTER_VALUE) ? FJSON_STATE_OBJECT_KEY : FJSON_STATE_ARRAY_VALUE;
+        fjson->state = (fjson->state == STATE_OBJECT_AFTER_VALUE) ? STATE_OBJECT_KEY : STATE_ARRAY_VALUE;
         return 0;
-    } else if ( (fjson->state == FJSON_STATE_OBJECT_AFTER_VALUE && byte == '}') || (fjson->state == FJSON_STATE_ARRAY_AFTER_VALUE && byte == ']') ) { // End of the object
+    } else if ( (fjson->state == STATE_OBJECT_AFTER_VALUE && byte == '}') || (fjson->state == STATE_ARRAY_AFTER_VALUE && byte == ']') ) { // End of the object
         return 1;
     } else {    // Any other char is considered error
         return -1;
@@ -331,33 +345,33 @@ static int state_element(fjson_t *fjson, char byte)
     switch (byte) {
 
     case '{':
-        fjson->state = FJSON_STATE_OBJECT_KEY;
+        fjson->state = STATE_OBJECT_KEY;
         fjson->el->type = FJSON_TYPE_OBJECT;
         return 0;
         break;
 
     case '[':
-        fjson->state = FJSON_STATE_ARRAY_VALUE;
+        fjson->state = STATE_ARRAY_VALUE;
         fjson->el->type = FJSON_TYPE_ARRAY;
         return 0;
         break;
 
     case '"':
-        fjson->state = FJSON_STATE_STRING;
+        fjson->state = STATE_STRING;
         fjson->el->type = FJSON_TYPE_STRING;
         return 0;
         break;
 
     case 't':
     case 'f':
-        fjson->state = FJSON_STATE_BOOLEAN;
+        fjson->state = STATE_BOOLEAN;
         fjson->el->type = FJSON_TYPE_BOOLEAN;
         write_buf(fjson, byte);
         return 0;
         break;
 
     case 'n':
-        fjson->state = FJSON_STATE_NULL;
+        fjson->state = STATE_NULL;
         fjson->el->type = FJSON_TYPE_NULL;
         write_buf(fjson, byte);
         return 0;
@@ -374,7 +388,7 @@ static int state_element(fjson_t *fjson, char byte)
     case '7':
     case '8':
     case '9':
-        fjson->state = FJSON_STATE_NUMBER;
+        fjson->state = STATE_NUMBER;
         fjson->el->type = FJSON_TYPE_NUMBER;
         write_buf(fjson, byte);
         return 0;
@@ -397,7 +411,7 @@ static int state_string(fjson_t *fjson, char byte)
         fjson->bi = 0;
         return 1;
     } else if (byte == '\\') {
-        fjson->state = FJSON_STATE_SPEC_CHAR;
+        fjson->state = STATE_SPEC_CHAR;
     } else
         write_buf(fjson, byte);
 
@@ -439,7 +453,7 @@ static int state_spec_char(fjson_t *fjson, char byte)
         break;
     }
 
-    fjson->state = FJSON_STATE_STRING; // Return to normal string state
+    fjson->state = STATE_STRING; // Return to normal string state
 
     return 0;
 }
@@ -500,25 +514,25 @@ int fjson_putbyte(fjson_t *fjson, char byte)
 {
     switch (fjson->state) {
 
-    case FJSON_STATE_ELEMENT:
+    case STATE_ELEMENT:
         return state_element(fjson, byte);
         break;
 
-    case FJSON_STATE_OBJECT_KEY:
+    case STATE_OBJECT_KEY:
         return state_object_key(fjson, byte);
         break;
 
-    case FJSON_STATE_OBJECT_KEY_PARSED:
+    case STATE_OBJECT_KEY_PARSED:
         return state_object_key_parsed(fjson, byte);
         break;
 
-    case FJSON_STATE_ARRAY_VALUE:
-    case FJSON_STATE_OBJECT_VALUE: {
+    case STATE_ARRAY_VALUE:
+    case STATE_OBJECT_VALUE: {
 
         int r = state_object_array_value(fjson, byte);
 
         // Only if the current fjson is not a child and we are not parsing an array value.
-        if (!fjson->father && fjson->state == FJSON_STATE_OBJECT_VALUE) {
+        if (!fjson->father && fjson->state == STATE_OBJECT_VALUE) {
             return (r == -1) ? -1 : 0;
         } else
             return r;
@@ -526,28 +540,28 @@ int fjson_putbyte(fjson_t *fjson, char byte)
         break;
     }
 
-    case FJSON_STATE_OBJECT_AFTER_VALUE:
-    case FJSON_STATE_ARRAY_AFTER_VALUE:
+    case STATE_OBJECT_AFTER_VALUE:
+    case STATE_ARRAY_AFTER_VALUE:
         return state_object_array_after_value(fjson, byte);
         break;
 
-    case FJSON_STATE_STRING:
+    case STATE_STRING:
         return state_string(fjson, byte);
         break;
 
-    case FJSON_STATE_SPEC_CHAR:
+    case STATE_SPEC_CHAR:
         return state_spec_char(fjson, byte);
         break;
 
-    case FJSON_STATE_NUMBER:
+    case STATE_NUMBER:
         return state_number(fjson, byte);
         break;
 
-    case FJSON_STATE_BOOLEAN:
+    case STATE_BOOLEAN:
         return state_boolean(fjson, byte);
         break;
 
-    case FJSON_STATE_NULL:
+    case STATE_NULL:
         return state_null(fjson, byte);
         break;
 
