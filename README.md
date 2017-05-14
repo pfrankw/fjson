@@ -37,7 +37,8 @@ When the type is FJSON_TYPE_NULL there is nothing inside the union to be checked
 
 
 ## Missing & TODO
-There is no support for unicode characters ("\uxxxx").  
+- There is no support for unicode characters ("\uxxxx").  
+- Remove typedef for struct fjson_element_s, fjson_array_s and fjson_pair_s.  
 
 ## Thanks
 A special thanks to my friend Davide, that gave me the idea and the method to develop it.
