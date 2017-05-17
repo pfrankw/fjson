@@ -1,4 +1,4 @@
-# fjson
+# libfjson
 [![Build Status](https://travis-ci.org/pfrankw/fjson.svg?branch=master)](https://travis-ci.org/pfrankw/fjson)  
 
 ## Overview
